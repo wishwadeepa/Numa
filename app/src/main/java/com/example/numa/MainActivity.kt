@@ -4,13 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,21 +31,32 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.statusBarsPadding
+
+// =============================================================
+// NUMA COLORS
+// =============================================================
 
 private val NumaBackground = Color(0xFFF7F7F6)
 private val NumaCharcoal = Color(0xFF373736)
 private val NumaYellow = Color(0xFFFFFF7D)
+
+// =============================================================
+// NUMA TYPOGRAPHY
+// =============================================================
 
 private val Prompt = FontFamily(
     Font(
@@ -78,6 +89,10 @@ private val NumaBodyStyle = TextStyle(
     fontSize = 15.sp
 )
 
+// =============================================================
+// MAIN ACTIVITY
+// =============================================================
+
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,6 +106,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// =============================================================
+// HOME
+// =============================================================
+
 @Composable
 fun NumaHome() {
 
@@ -98,116 +117,95 @@ fun NumaHome() {
         mutableStateOf(false)
     }
 
+    /*
+     * IMPORTANT:
+     *
+     * This Box is now the TRUE full-screen container.
+     *
+     * Previously our padding was applied before the blur,
+     * which caused the blur to stop around the inner content.
+     */
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(NumaBackground)
-            .statusBarsPadding()
-            .padding(
-                horizontal = 24.dp,
-                vertical = 20.dp
-            )
     ) {
 
-        Column(
-            modifier = Modifier.fillMaxSize()
+        // =====================================================
+        // HOME CONTENT
+        // =====================================================
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(
+                    radius = if (showNewMenu) {
+                        7.dp
+                    } else {
+                        0.dp
+                    }
+                )
         ) {
 
-            // ---------------------------------------------
-            // Header
-            // ---------------------------------------------
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(
+                        horizontal = 24.dp,
+                        vertical = 20.dp
+                    )
             ) {
 
-                Text(
-                    text = "My Numa",
-                    style = NumaTitleStyle,
-                    color = NumaCharcoal
-                )
+                // =================================================
+                // HEADER
+                // =================================================
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Text(
+                        text = "My Numa",
+                        style = NumaTitleStyle,
+                        color = NumaCharcoal
+                    )
+
+                    Spacer(
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Image(
+                        painter = painterResource(
+                            R.drawable.ic_more
+                        ),
+                        contentDescription = "More options",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                // =================================================
+                // EMPTY SPACE
+                // =================================================
 
                 Spacer(
                     modifier = Modifier.weight(1f)
                 )
 
-                Image(
-                    painter = painterResource(R.drawable.ic_more),
-                    contentDescription = "More options",
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            // ---------------------------------------------
-            // Empty content area
-            // ---------------------------------------------
-
-            Spacer(
-                modifier = Modifier.weight(1f)
-            )
-
-            // ---------------------------------------------
-            // New menu + bottom controls
-            // ---------------------------------------------
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.End
-            ) {
-
-                // New menu
-
-                AnimatedVisibility(
-                    visible = showNewMenu,
-                    enter = fadeIn() + expandVertically(
-                        expandFrom = Alignment.Bottom
-                    ),
-                    exit = fadeOut() + shrinkVertically(
-                        shrinkTowards = Alignment.Bottom
-                    )
-                ) {
-
-                    Column(
-                        modifier = Modifier
-                            .padding(bottom = 12.dp)
-                            .clip(
-                                RoundedCornerShape(20.dp)
-                            )
-                            .background(NumaCharcoal)
-                            .padding(
-                                horizontal = 20.dp,
-                                vertical = 12.dp
-                            ),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-
-                        NewMenuItem(
-                            icon = R.drawable.ic_write,
-                            label = "Write"
-                        )
-
-                        NewMenuItem(
-                            icon = R.drawable.ic_speak,
-                            label = "Speak"
-                        )
-
-                        NewMenuItem(
-                            icon = R.drawable.ic_doodle,
-                            label = "Doodle"
-                        )
-                    }
-                }
-
-                // Bottom controls
+                // =================================================
+                // BOTTOM CONTROLS
+                // =================================================
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    // Search
+                    // -------------------------------------------------
+                    // SEARCH BAR
+                    // -------------------------------------------------
 
                     Row(
                         modifier = Modifier
@@ -222,7 +220,9 @@ fun NumaHome() {
                     ) {
 
                         Image(
-                            painter = painterResource(R.drawable.ic_search),
+                            painter = painterResource(
+                                R.drawable.ic_search
+                            ),
                             contentDescription = "Search",
                             modifier = Modifier.size(18.dp)
                         )
@@ -234,24 +234,251 @@ fun NumaHome() {
                         Text(
                             text = "Looking for something?",
                             style = NumaBodyStyle,
-                            color = Color.White.copy(alpha = 0.75f)
+                            color = Color.White.copy(
+                                alpha = 0.75f
+                            )
                         )
                     }
 
-                    // New button
+                    // -------------------------------------------------
+                    // EXPLICIT WHITESPACE
+                    //
+                    // This is intentional.
+                    // The mockup has a visible gap between the
+                    // search pill and the New button.
+                    // -------------------------------------------------
+
+                    Spacer(
+                        modifier = Modifier.size(16.dp)
+                    )
+
+                    // -------------------------------------------------
+                    // NEW BUTTON
+                    // -------------------------------------------------
 
                     Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .background(NumaCharcoal),
+                        modifier = Modifier.size(56.dp),
                         contentAlignment = Alignment.Center
                     ) {
 
-                        Image(
-                            painter = painterResource(R.drawable.ic_add),
-                            contentDescription = "New",
-                            modifier = Modifier.size(24.dp)
+                        // The actual button is controlled by NewMenu.
+                        //
+                        // This spacer simply reserves its position.
+                    }
+                }
+            }
+        }
+
+        // =====================================================
+        // NEW MENU / MORPHING BUTTON
+        // =====================================================
+
+        NewMenu(
+            expanded = showNewMenu,
+            onToggle = {
+                showNewMenu = !showNewMenu
+            }
+        )
+    }
+}
+
+// =============================================================
+// NEW MENU
+// =============================================================
+
+@Composable
+private fun NewMenu(
+    expanded: Boolean,
+    onToggle: () -> Unit
+) {
+
+    val transition = updateTransition(
+        targetState = expanded,
+        label = "New menu transition"
+    )
+
+    // ---------------------------------------------------------
+    // WIDTH
+    // ---------------------------------------------------------
+
+    val menuWidth by transition.animateDp(
+        transitionSpec = {
+            spring(
+                dampingRatio = 0.70f,
+                stiffness = 400f
+            )
+        },
+        label = "New width"
+    ) { isExpanded ->
+
+        if (isExpanded) {
+            240.dp
+        } else {
+            56.dp
+        }
+    }
+
+    // ---------------------------------------------------------
+    // HEIGHT
+    // ---------------------------------------------------------
+
+    val menuHeight by transition.animateDp(
+        transitionSpec = {
+            spring(
+                dampingRatio = 0.70f,
+                stiffness = 400f
+            )
+        },
+        label = "New height"
+    ) { isExpanded ->
+
+        if (isExpanded) {
+            230.dp
+        } else {
+            56.dp
+        }
+    }
+
+    // ---------------------------------------------------------
+    // CONTENT ALPHA
+    // ---------------------------------------------------------
+
+    val contentAlpha by transition.animateFloat(
+        transitionSpec = {
+            spring(
+                dampingRatio = 0.85f,
+                stiffness = 320f
+            )
+        },
+        label = "New content alpha"
+    ) { isExpanded ->
+
+        if (isExpanded) {
+            1f
+        } else {
+            0f
+        }
+    }
+
+    // =========================================================
+    // FULL SCREEN LAYER
+    // =========================================================
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+
+        // =====================================================
+        // FULL SCREEN TOUCH / DIM LAYER
+        //
+        // This now covers the ENTIRE screen.
+        // The underlying Home layer is already blurred.
+        // =====================================================
+
+        if (expanded) {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Color.White.copy(alpha = 0.04f)
+                    )
+                    .clickable {
+                        onToggle()
+                    }
+            )
+        }
+
+        // =====================================================
+        // MORPHING NEW SURFACE
+        //
+        // Anchored to the exact bottom-right position.
+        // =====================================================
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    end = 24.dp,
+                    bottom = 20.dp
+                ),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .size(
+                        width = menuWidth,
+                        height = menuHeight
+                    )
+                    .shadow(
+                        elevation = if (expanded) {
+                            24.dp
+                        } else {
+                            0.dp
+                        },
+                        shape = RoundedCornerShape(28.dp),
+                        clip = false
+                    )
+                    .clip(
+                        RoundedCornerShape(28.dp)
+                    )
+                    .background(NumaCharcoal)
+                    .clickable {
+                        if (!expanded) {
+                            onToggle()
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+
+                // =================================================
+                // CLOSED STATE
+                // =================================================
+
+                if (!expanded) {
+
+                    Image(
+                        painter = painterResource(
+                            R.drawable.ic_add
+                        ),
+                        contentDescription = "New",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                // =================================================
+                // OPEN STATE
+                // =================================================
+
+                if (expanded) {
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(
+                                horizontal = 30.dp,
+                                vertical = 20.dp
+                            ),
+                        verticalArrangement = Arrangement.SpaceEvenly
+                    ) {
+
+                        NewMenuItem(
+                            icon = R.drawable.ic_write,
+                            label = "Write",
+                            alpha = contentAlpha
+                        )
+
+                        NewMenuItem(
+                            icon = R.drawable.ic_speak,
+                            label = "Speak",
+                            alpha = contentAlpha
+                        )
+
+                        NewMenuItem(
+                            icon = R.drawable.ic_doodle,
+                            label = "Doodle",
+                            alpha = contentAlpha
                         )
                     }
                 }
@@ -260,47 +487,52 @@ fun NumaHome() {
     }
 }
 
+// =============================================================
+// NEW MENU ITEM
+// =============================================================
+
 @Composable
 private fun NewMenuItem(
     icon: Int,
-    label: String
+    label: String,
+    alpha: Float
 ) {
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp),
+            .height(58.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(NumaYellow),
-            contentAlignment = Alignment.Center
-        ) {
-
-            Image(
-                painter = painterResource(icon),
-                contentDescription = null,
-                modifier = Modifier.size(19.dp)
-            )
-        }
+        Image(
+            painter = painterResource(icon),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(
+                NumaYellow.copy(alpha = alpha)
+            ),
+            modifier = Modifier.size(42.dp)
+        )
 
         Spacer(
-            modifier = Modifier.size(12.dp)
+            modifier = Modifier.size(16.dp)
         )
 
         Text(
             text = label,
             fontFamily = Prompt,
-            fontSize = 16.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Medium,
-            color = Color.White
+            color = Color.White.copy(
+                alpha = alpha
+            )
         )
     }
 }
+
+// =============================================================
+// PREVIEW
+// =============================================================
 
 @Preview(
     showBackground = true,
