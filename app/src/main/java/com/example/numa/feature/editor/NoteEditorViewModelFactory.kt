@@ -6,7 +6,7 @@ import com.example.numa.data.NoteRepository
 
 class NoteEditorViewModelFactory(
     private val repository: NoteRepository,
-    private val noteId: String? = null
+    private val existingNoteId: String? = null
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -18,7 +18,7 @@ class NoteEditorViewModelFactory(
 
             return NoteEditorViewModel(
                 repository = repository,
-                existingNoteId = noteId
+                noteId = existingNoteId
             ) as T
         }
 

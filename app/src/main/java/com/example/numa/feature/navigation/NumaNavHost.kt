@@ -63,12 +63,14 @@ fun NumaNavHost() {
             NumaHome(
                 notes = notes,
 
+                // New note
                 onWriteClick = {
                     navController.navigate(
                         NumaRoutes.EDITOR
                     )
                 },
 
+                // Open existing note
                 onNoteClick = { noteId ->
 
                     navController.navigate(
@@ -93,7 +95,13 @@ fun NumaNavHost() {
             )
 
             NoteEditorScreen(
-                viewModel = viewModel
+                viewModel = viewModel,
+
+                // If the note is deleted,
+                // return to Home.
+                onDeleted = {
+                    navController.popBackStack()
+                }
             )
         }
 
@@ -116,12 +124,18 @@ fun NumaNavHost() {
             val viewModel: NoteEditorViewModel = viewModel(
                 factory = NoteEditorViewModelFactory(
                     repository = repository,
-                    noteId = noteId
+                    existingNoteId = noteId
                 )
             )
 
             NoteEditorScreen(
-                viewModel = viewModel
+                viewModel = viewModel,
+
+                // If the note is deleted,
+                // return to Home.
+                onDeleted = {
+                    navController.popBackStack()
+                }
             )
         }
     }
