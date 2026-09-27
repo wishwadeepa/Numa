@@ -6,10 +6,11 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -22,15 +23,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.numa.R
+import androidx.compose.ui.geometry.Offset
 
 private val NumaBackground = Color(0xFFF7F7F6)
 private val NumaCharcoal = Color(0xFF373736)
@@ -68,23 +70,27 @@ fun DoodleScreen(
             .background(NumaBackground)
     ) {
 
-        /*
-         * Drawing canvas
-         */
+        // =====================================================
+        // DRAWING CANVAS
+        // =====================================================
+
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
                     start = 24.dp,
-                    top = 80.dp,
+                    top = 76.dp,
                     end = 24.dp,
-                    bottom = 120.dp
+                    bottom = 108.dp
                 )
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(28.dp))
+                .clip(
+                    RoundedCornerShape(28.dp)
+                )
                 .background(Color.White)
                 .pointerInput(eraserEnabled) {
 
                     detectDragGestures(
+
                         onDragStart = { position ->
                             currentPoints = listOf(position)
                         },
@@ -119,9 +125,7 @@ fun DoodleScreen(
                 }
         ) {
 
-            /*
-             * Existing strokes
-             */
+            // Existing strokes
             strokes.forEach { stroke ->
 
                 if (stroke.points.size >= 2) {
@@ -157,9 +161,7 @@ fun DoodleScreen(
                 }
             }
 
-            /*
-             * Stroke currently being drawn
-             */
+            // Current stroke
             if (currentPoints.size >= 2) {
 
                 val path = Path()
@@ -189,83 +191,80 @@ fun DoodleScreen(
             }
         }
 
-        /*
-         * Top-right close button
-         */
-        Surface(
+        // =====================================================
+        // CLOSE
+        // =====================================================
+
+        IconButton(
+            onClick = onBack,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(
                     top = 20.dp,
                     end = 20.dp
                 )
-                .size(48.dp),
-            shape = CircleShape,
-            color = NumaCharcoal
+                .size(40.dp)
         ) {
 
-            IconButton(
-                onClick = onBack
-            ) {
-
-                Icon(
-                    painter = androidx.compose.ui.res.painterResource(
-                        id = R.drawable.ic_more
-                    ),
-                    contentDescription = "Close",
-                    tint = Color.White
-                )
-            }
+            Icon(
+                painter = painterResource(
+                    R.drawable.ic_close
+                ),
+                contentDescription = "Close",
+                tint = NumaCharcoal,
+                modifier = Modifier.size(22.dp)
+            )
         }
 
-        /*
-         * Drawing controls
-         */
+        // =====================================================
+        // DRAWING CONTROLS
+        // =====================================================
+
         Surface(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 28.dp),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+                .padding(bottom = 24.dp),
+            shape = RoundedCornerShape(22.dp),
             color = NumaCharcoal
         ) {
 
             Row(
                 modifier = Modifier.padding(
-                    horizontal = 8.dp,
+                    horizontal = 6.dp,
                     vertical = 6.dp
                 ),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                /*
-                 * Undo
-                 */
+                // Undo
                 IconButton(
                     onClick = {
 
                         if (strokes.isNotEmpty()) {
 
                             val last =
-                                strokes.removeAt(strokes.lastIndex)
+                                strokes.removeAt(
+                                    strokes.lastIndex
+                                )
 
                             undoneStrokes.add(last)
                         }
-                    }
+                    },
+                    modifier = Modifier.size(44.dp)
                 ) {
 
                     Icon(
-                        painter = androidx.compose.ui.res.painterResource(
-                            id = R.drawable.ic_more
+                        painter = painterResource(
+                            R.drawable.ic_undo
                         ),
                         contentDescription = "Undo",
-                        tint = Color.White
+                        tint = Color.White,
+                        modifier = Modifier.size(21.dp)
                     )
                 }
 
-                /*
-                 * Redo
-                 */
+                // Redo
                 IconButton(
                     onClick = {
 
@@ -278,21 +277,21 @@ fun DoodleScreen(
 
                             strokes.add(stroke)
                         }
-                    }
+                    },
+                    modifier = Modifier.size(44.dp)
                 ) {
 
                     Icon(
-                        painter = androidx.compose.ui.res.painterResource(
-                            id = R.drawable.ic_more
+                        painter = painterResource(
+                            R.drawable.ic_redo
                         ),
                         contentDescription = "Redo",
-                        tint = Color.White
+                        tint = Color.White,
+                        modifier = Modifier.size(21.dp)
                     )
                 }
 
-                /*
-                 * Eraser
-                 */
+                // Eraser
                 Surface(
                     shape = CircleShape,
                     color = if (eraserEnabled) {
@@ -305,61 +304,63 @@ fun DoodleScreen(
                     IconButton(
                         onClick = {
                             eraserEnabled = !eraserEnabled
-                        }
+                        },
+                        modifier = Modifier.size(44.dp)
                     ) {
 
                         Icon(
-                            painter = androidx.compose.ui.res.painterResource(
-                                id = R.drawable.ic_doodle
+                            painter = painterResource(
+                                R.drawable.ic_eraser
                             ),
                             contentDescription = "Eraser",
                             tint = if (eraserEnabled) {
                                 NumaCharcoal
                             } else {
                                 Color.White
-                            }
+                            },
+                            modifier = Modifier.size(21.dp)
                         )
                     }
                 }
 
-                /*
-                 * Clear
-                 */
+                // Clear
                 IconButton(
                     onClick = {
                         strokes.clear()
                         undoneStrokes.clear()
                         currentPoints = emptyList()
-                    }
+                    },
+                    modifier = Modifier.size(44.dp)
                 ) {
 
                     Icon(
-                        painter = androidx.compose.ui.res.painterResource(
-                            id = R.drawable.ic_more
+                        painter = painterResource(
+                            R.drawable.ic_close
                         ),
                         contentDescription = "Clear",
-                        tint = Color.White
+                        tint = Color.White,
+                        modifier = Modifier.size(21.dp)
                     )
                 }
 
-                /*
-                 * Done
-                 */
+                // Done
                 Surface(
                     shape = CircleShape,
                     color = NumaYellow
                 ) {
 
                     IconButton(
-                        onClick = onDone
+                        onClick = onDone,
+                        modifier = Modifier.size(44.dp)
                     ) {
 
                         Icon(
-                            painter = androidx.compose.ui.res.painterResource(
-                                id = R.drawable.ic_add
+                            painter = painterResource(
+                                R.drawable.ic_check
                             ),
                             contentDescription = "Done",
-                            tint = NumaCharcoal
+                            tint = NumaCharcoal,
+                            modifier = Modifier.size(21.dp)
                         )
                     }
                 }
