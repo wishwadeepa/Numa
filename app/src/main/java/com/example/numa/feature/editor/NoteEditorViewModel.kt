@@ -6,15 +6,15 @@ import com.example.numa.data.NoteRepository
 import com.example.numa.data.local.Note
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import java.util.UUID
 
 class NoteEditorViewModel(
     private val repository: NoteRepository,
-    private val existingNoteId: String? = null
+    existingNoteId: String? = null
 ) : ViewModel() {
 
     private val noteId = existingNoteId ?: UUID.randomUUID().toString()
@@ -31,11 +31,11 @@ class NoteEditorViewModel(
 
     init {
         if (existingNoteId != null) {
-            loadNote(existingNoteId)
+            loadExistingNote(existingNoteId)
         }
     }
 
-    private fun loadNote(id: String) {
+    private fun loadExistingNote(id: String) {
 
         viewModelScope.launch {
 
@@ -75,6 +75,20 @@ class NoteEditorViewModel(
 
         viewModelScope.launch {
             saveNote()
+        }
+    }
+
+    fun deleteNote(
+        onDeleted: () -> Unit
+    ) {
+
+        autosaveJob?.cancel()
+
+        viewModelScope.launch {
+
+            repository.deleteNote(noteId)
+
+            onDeleted()
         }
     }
 
