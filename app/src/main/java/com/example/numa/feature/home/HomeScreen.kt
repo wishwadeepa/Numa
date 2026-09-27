@@ -97,7 +97,8 @@ private val NumaBodyStyle = TextStyle(
 fun NumaHome(
     notes: List<Note>,
     onWriteClick: () -> Unit = {},
-    onNoteClick: (String) -> Unit = {}
+    onNoteClick: (String) -> Unit = {},
+    onDoodleClick: () -> Unit = {}
 ) {
 
     var showNewMenu by remember {
@@ -294,6 +295,10 @@ fun NumaHome(
             onWriteClick = {
                 showNewMenu = false
                 onWriteClick()
+            },
+            onDoodleClick = {
+                showNewMenu = false
+                onDoodleClick()
             }
         )
     }
@@ -506,7 +511,8 @@ private fun NoteCard(
 private fun NewMenu(
     expanded: Boolean,
     onToggle: () -> Unit,
-    onWriteClick: () -> Unit
+    onWriteClick: () -> Unit,
+    onDoodleClick: () -> Unit
 ) {
 
     val transition = updateTransition(
@@ -678,7 +684,8 @@ private fun NewMenu(
                         NewMenuItem(
                             icon = R.drawable.ic_doodle,
                             label = "Doodle",
-                            alpha = contentAlpha
+                            alpha = contentAlpha,
+                            onClick = onDoodleClick
                         )
                     }
                 }

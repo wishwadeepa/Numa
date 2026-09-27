@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.numa.data.NoteRepository
 import com.example.numa.data.local.NumaDatabase
+import com.example.numa.feature.doodle.DoodleScreen
 import com.example.numa.feature.editor.NoteEditorScreen
 import com.example.numa.feature.editor.NoteEditorViewModel
 import com.example.numa.feature.editor.NoteEditorViewModelFactory
@@ -26,6 +27,8 @@ object NumaRoutes {
     const val EDITOR = "editor"
 
     const val EDITOR_WITH_ID = "editor/{noteId}"
+
+    const val DOODLE = "doodle"
 }
 
 @Composable
@@ -75,6 +78,13 @@ fun NumaNavHost() {
 
                     navController.navigate(
                         "editor/$noteId"
+                    )
+                },
+
+                // Open Doodle
+                onDoodleClick = {
+                    navController.navigate(
+                        NumaRoutes.DOODLE
                     )
                 }
             )
@@ -134,6 +144,25 @@ fun NumaNavHost() {
                 // If the note is deleted,
                 // return to Home.
                 onDeleted = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // =====================================================
+        // DOODLE
+        // =====================================================
+
+        composable(
+            route = NumaRoutes.DOODLE
+        ) {
+
+            DoodleScreen(
+                onDone = {
+                    navController.popBackStack()
+                },
+
+                onBack = {
                     navController.popBackStack()
                 }
             )
