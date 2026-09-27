@@ -19,9 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,7 +40,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.numa.R
@@ -200,29 +199,22 @@ fun NumaHome(
                             modifier = Modifier.height(16.dp)
                         )
 
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(
-                                bottom = 20.dp
-                            )
-                        ) {
+                        // =================================================
+                        // SUBTLE MASONRY RECENTS
+                        // =================================================
+                        //
+                        // This replaces the old LazyVerticalGrid.
+                        //
+                        // The two columns flow independently, so one
+                        // taller card does not force the neighboring
+                        // card to have the same height.
+                        //
+                        // =================================================
 
-                            items(
-                                items = notes,
-                                key = { note -> note.id }
-                            ) { note ->
-
-                                NoteCard(
-                                    note = note,
-                                    onClick = {
-                                        onNoteClick(note.id)
-                                    }
-                                )
-                            }
-                        }
+                        MasonryNotes(
+                            notes = notes,
+                            onNoteClick = onNoteClick
+                        )
                     }
                 }
 
@@ -308,6 +300,99 @@ fun NumaHome(
 }
 
 // =============================================================
+// MASONRY RECENTS
+// =============================================================
+
+@Composable
+private fun MasonryNotes(
+    notes: List<Note>,
+    onNoteClick: (String) -> Unit
+) {
+
+    /*
+     * Split the notes into two independent columns.
+     *
+     * Even-numbered notes go left.
+     * Odd-numbered notes go right.
+     *
+     * Because these are normal Columns inside a scrolling
+     * container, the cards can have different heights without
+     * creating the rigid row structure of LazyVerticalGrid.
+     */
+
+    val leftNotes = remember(notes) {
+        notes.filterIndexed { index, _ ->
+            index % 2 == 0
+        }
+    }
+
+    val rightNotes = remember(notes) {
+        notes.filterIndexed { index, _ ->
+            index % 2 == 1
+        }
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(
+            bottom = 20.dp
+        )
+    ) {
+
+        item {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+
+                // =================================================
+                // LEFT COLUMN
+                // =================================================
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+
+                    leftNotes.forEach { note ->
+
+                        NoteCard(
+                            note = note,
+                            onClick = {
+                                onNoteClick(note.id)
+                            }
+                        )
+                    }
+                }
+
+                // =================================================
+                // RIGHT COLUMN
+                // =================================================
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+
+                    rightNotes.forEach { note ->
+
+                        NoteCard(
+                            note = note,
+                            onClick = {
+                                onNoteClick(note.id)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// =============================================================
 // NOTE CARD
 // =============================================================
 
@@ -317,9 +402,50 @@ private fun NoteCard(
     onClick: () -> Unit
 ) {
 
+    /*
+     * Card height is currently based on content density.
+     *
+     * This is deliberately subtle:
+     *
+     * Short  → 132dp
+     * Medium → 160dp
+     * Dense  → 190dp
+     *
+     * Later, Numa's intelligence layer can influence this
+     * using relationships, importance, topics, etc.
+     */
+
+    val contentLength =
+        note.title.length + note.content.length
+
+    val cardHeight = when {
+
+        contentLength < 80 ->
+            132.dp
+
+        contentLength < 220 ->
+            160.dp
+
+        else ->
+            190.dp
+    }
+
+    val previewLines = when {
+
+        contentLength < 80 ->
+            2
+
+        contentLength < 220 ->
+            3
+
+        else ->
+            4
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .height(cardHeight)
             .clip(
                 RoundedCornerShape(20.dp)
             )
@@ -328,7 +454,11 @@ private fun NoteCard(
                 onClick()
             }
             .padding(18.dp)
-    ){
+    ) {
+
+        // =====================================================
+        // TITLE
+        // =====================================================
 
         Text(
             text = if (note.title.isBlank()) {
@@ -340,8 +470,13 @@ private fun NoteCard(
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color.White,
-            maxLines = 2
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
         )
+
+        // =====================================================
+        // BODY PREVIEW
+        // =====================================================
 
         if (note.content.isNotBlank()) {
 
@@ -356,7 +491,8 @@ private fun NoteCard(
                 color = Color.White.copy(
                     alpha = 0.75f
                 ),
-                maxLines = 4
+                maxLines = previewLines,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -492,6 +628,10 @@ private fun NewMenu(
                 contentAlignment = Alignment.Center
             ) {
 
+                // =================================================
+                // CLOSED STATE
+                // =================================================
+
                 if (!expanded) {
 
                     Image(
@@ -505,6 +645,10 @@ private fun NewMenu(
                         )
                     )
                 }
+
+                // =================================================
+                // EXPANDED STATE
+                // =================================================
 
                 if (expanded) {
 
@@ -593,21 +737,4 @@ private fun NewMenuItem(
             )
         )
     }
-}
-
-// =============================================================
-// PREVIEW
-// =============================================================
-
-@Preview(
-    showBackground = true,
-    widthDp = 412,
-    heightDp = 915
-)
-@Composable
-private fun NumaHomePreview() {
-
-    NumaHome(
-        notes = emptyList()
-    )
 }
